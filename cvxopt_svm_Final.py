@@ -52,7 +52,7 @@ def SVM_Dual(X,y,C):
     bias = b.mean()
     print("W is:",W)
     print("Bias is:", bias)
-    return W,bias
+    return W,bias,sum(cond)
 
 def predict(X,W,b):
     y = np.dot(X,W) + b
@@ -100,29 +100,58 @@ def main():
     
     #train_errors = np.zeros([num_splits,len(train_percent)])
 #     train_percent[percent_i]/100
+	train_errors = np.zeros([num_splits,len(C_values)])
     test_errors = np.zeros([num_splits,len(C_values)])
+	GeometricMargin = np.zeros([num_splits,len(C_values)])
+	supportVectors = np.zeros([num_splits,len(C_values)])
     for C in range(len(C_values)):
         for split in range(num_splits):
             X_train,X_test,y_train,y_test = train_test_split(data, target, test_size=0.20, stratify=target)
-            W,b = SVM_Dual(X_train,y_train,C_values[C])
+            W,b,sv = SVM_Dual(X_train,y_train,C_values[C])
             test_errors[split][C] = calculateError(y_test,predict(X_test,W,b))
-            print(test_errors)
+			train_errors[split][C] = calculateError(y_train,predict(X_train,W,b))
+            GeometricMargin[split][C] = 1/np.linalg.norm(W)
+			supportVectors[split][C] = sv
+			#print(test_errors)
     #print(test_errors)
-    test_errors = np.array(test_errors)
+    #test_errors = np.array(test_errors)
     mean_test_errors = np.mean(test_errors,axis = 0)
     std_test_errors = np.std(test_errors,axis=0)
+	
+	mean_train_errors = np.mean(train_errors,axis = 0)
+    std_train_errors = np.std(train_errors,axis=0)
+	
+	mean_geometricMargin = np.mean(GeometricMargin,axis = 0)
+    std_geometricMargin = np.std(GeometricMargin,axis=0)
+	
+	mean_supportVectors = np.mean(supportVectors,axis = 0)
+    std_supportVectors = np.std(supportVectors,axis=0)
+	
     print(test_errors)
-    print("Mean of testing errors for respective training percetages are:",mean_test_errors)
-    print("Standard deviation of testing errors for respective training percetages are:",std_test_errors)
+    print("Mean of testing errors for each C is:",mean_test_errors)
+    print("Standard deviation of testing errors for each C is:",std_test_errors)
+	
+	print(train_errors)
+    print("Mean of trainig errors for each C is:",mean_train_errors)
+    print("Standard deviation of trainig errors for for each C is:",std_train_errors)
+	
+	print(GeometricMargin)
+    print("Mean of geometric margin for each C is:",mean_geometricMargin)
+    print("Standard deviation of geometric margin for each C is:",std_geometricMargin)
+	
+	print(supportVectors)
+    print("Mean of support Vectors for each C is:",mean_supportVectors)
+    print("Standard deviation of support Vectors for for each C is:",std_supportVectors)
+	
     #errorbar(train_percent, mean_test_errors, yerr=std_test_errors, capthick=4)
-#     xlabel('% of training data')
-#     ylabel('Mean test errors')
-#     title('Mean test errors variation')
-#     show()
-    return test_errors
+	#xlabel('% of training data')
+	#ylabel('Mean test errors')
+	#title('Mean test errors variation')
+	#show()
+    return test_errors,train_errors,GeometricMargin,supportVectors
 
 if __name__ == '__main__':
-    test_errors = main()
+    test_errors,train_errors,GeometricMargin,supportVectors = main()
 
 
 
